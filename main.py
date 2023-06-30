@@ -28,49 +28,17 @@ def main():
     # Display the accelerometer values in Streamlit
     st.write('Listening to accelerometer data...')
 
-    # JavaScript code to read accelerometer values and send them to WebSocket
-    js_code = """
-    <script>
-    const socket = new WebSocket('ws://localhost:8000');
-
-    socket.onopen = function () {
-      console.log('WebSocket connection established');
-    };
-
-    socket.onerror = function (error) {
-      console.error('WebSocket error:', error);
-    };
-
-    function handleAccelerometerData(event) {
-      const acceleration = event.accelerationIncludingGravity;
-      const x = acceleration.x;
-      const y = acceleration.y;
-      const z = acceleration.z;
-
-      socket.send(JSON.stringify({ x, y, z }));
-    }
-
-    function startAccelerometer() {
-      window.addEventListener('devicemotion', handleAccelerometerData);
-    }
-
-    function stopAccelerometer() {
-      window.removeEventListener('devicemotion', handleAccelerometerData);
-    }
-
-    startAccelerometer();
-    </script>
-    """
-
-    # Display the JavaScript code
-    st.markdown(js_code, unsafe_allow_html=True)
-
     # Start the WebSocket server
-    start_server = websockets.serve(handle_accelerometer_data, 'localhost', 8000)
+    async def start_websocket_server():
+        server = await websockets.serve(handle_accelerometer_data, 'localhost', 8000)
+        await server.wait_closed()
 
-    # Run the WebSocket server in the background
-    asyncio.ensure_future(start_server)
+    # Run the Streamlit app with the WebSocket server
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(start_websocket_server())
 
 # Run the Streamlit app
 if __name__ == '__main__':
     main()
+
