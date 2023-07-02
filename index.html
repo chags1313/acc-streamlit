@@ -1,17 +1,57 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Acceleration Reader</title>
+    <title>Acceleration Plot</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            place-items: center;
+            height: 100vh;
+            background-color: #f7f7f7;
+        }
+
+        .container {
+            max-width: 500px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+        }
+
+        .plot-container {
+            padding: 20px;
+            height: 300px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Acceleration Reader</h1>
-
-    <p id="acceleration-data">Acceleration data will be displayed here.</p>
+    <div class="container">
+        <div class="header">
+            Acceleration Plot
+        </div>
+        <div class="plot-container" id="acceleration-plot"></div>
+    </div>
 
     <script>
         // Check if the browser supports the Accelerometer API
         if ('Accelerometer' in window) {
             const accelerometer = new Accelerometer({ frequency: 60 });
+
+            const xData = [];
+            const yData = [];
+            const zData = [];
 
             accelerometer.addEventListener('reading', () => {
                 // Get the acceleration values
@@ -19,16 +59,28 @@
                 const y = accelerometer.y;
                 const z = accelerometer.z;
 
-                // Display the acceleration data
-                const accelerationDataElement = document.getElementById('acceleration-data');
-                accelerationDataElement.textContent = `Acceleration (m/s²): X: ${x.toFixed(2)}, Y: ${y.toFixed(2)}, Z: ${z.toFixed(2)}`;
+                // Store the acceleration data
+                xData.push(x);
+                yData.push(y);
+                zData.push(z);
+
+                // Update the plot
+                Plotly.newPlot('acceleration-plot', [
+                    { x: xData, y: yData, name: 'X-Y', mode: 'markers' },
+                    { x: xData, y: zData, name: 'X-Z', mode: 'markers' },
+                    { x: yData, y: zData, name: 'Y-Z', mode: 'markers' }
+                ], {
+                    xaxis: { title: 'X-axis' },
+                    yaxis: { title: 'Y-axis' },
+                    showlegend: true
+                });
             });
 
             accelerometer.start();
         } else {
             // Browser does not support the Accelerometer API
-            const accelerationDataElement = document.getElementById('acceleration-data');
-            accelerationDataElement.textContent = 'Your browser does not support the Accelerometer API.';
+            const accelerationPlotElement = document.getElementById('acceleration-plot');
+            accelerationPlotElement.textContent = 'Your browser does not support the Accelerometer API.';
         }
     </script>
 </body>
