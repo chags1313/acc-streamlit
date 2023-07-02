@@ -22,7 +22,7 @@ async def handle_client(websocket, path):
             break
 
 # Start the WebSocket server
-start_server = websockets.serve(handle_client, "localhost", 8000)
+start_server = websockets.serve(handle_client, "localhost", 8050)
 
 # Embed the HTML file with the JavaScript code into Streamlit
 components.html(
@@ -31,7 +31,7 @@ components.html(
         <body>
             <script>
                 // Establish WebSocket connection
-                var socket = new WebSocket("ws://localhost:8000");
+                var socket = new WebSocket("ws://localhost:8050");
 
                 // Listen for accelerometer data
                 window.addEventListener('devicemotion', function(event) {
