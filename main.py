@@ -3,6 +3,9 @@ from streamlit import components
 import asyncio
 import websockets
 import json
+import nest_asyncio
+
+nest_asyncio.apply()  # Enable event loop nesting
 
 # Create a list to store accelerometer data
 accelerometer_data_list = []
@@ -48,8 +51,7 @@ components.html(
 )
 
 # Start the Streamlit app
-@st.asyncio
-async def main():
+def main():
     # Start the WebSocket server in the background
     asyncio.ensure_future(start_server)
 
@@ -71,8 +73,9 @@ async def main():
             accelerometer_data_list.clear()
 
         # Sleep for a short interval
-        await asyncio.sleep(0.1)
+        asyncio.sleep(0.1)
 
 # Run the Streamlit app
 if __name__ == '__main__':
     main()
+
