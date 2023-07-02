@@ -52,33 +52,36 @@
         const yData = [];
         const zData = [];
 
-        if (window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', handleOrientation);
+        if ('Accelerometer' in window) {
+            const accelerometer = new Accelerometer({ frequency: 60 });
+
+            accelerometer.addEventListener('reading', () => {
+                const x = accelerometer.x;
+                const y = accelerometer.y;
+                const z = accelerometer.z;
+
+                xData.push(x);
+                yData.push(y);
+                zData.push(z);
+
+                Plotly.newPlot('acceleration-plot', [
+                    { x: xData, y: yData, name: 'X' },
+                    { x: xData, y: zData, name: 'Y' },
+                    { x: yData, y: zData, name: 'Z' }
+                ], {
+                    xaxis: { title: 'Time' },
+                    yaxis: { title: 'Acceleration' },
+                    showlegend: true
+                });
+            });
+
+            accelerometer.start();
         } else {
             const accelerationPlotElement = document.getElementById('acceleration-plot');
-            accelerationPlotElement.textContent = 'DeviceOrientationEvent is not supported on this device.';
-        }
-
-        function handleOrientation(event) {
-            const x = event.accelerationIncludingGravity.x;
-            const y = event.accelerationIncludingGravity.y;
-            const z = event.accelerationIncludingGravity.z;
-
-            xData.push(x);
-            yData.push(y);
-            zData.push(z);
-
-            Plotly.newPlot('acceleration-plot', [
-                { x: xData, y: yData, name: 'X' },
-                { x: xData, y: zData, name: 'Y' },
-                { x: yData, y: zData, name: 'Z' }
-            ], {
-                xaxis: { title: 'Acceleration' },
-                yaxis: { title: 'Time' },
-                showlegend: true
-            });
+            accelerationPlotElement.textContent = 'Accelerometer is not supported on this device.';
         }
     </script>
 </body>
 </html>
+
 
