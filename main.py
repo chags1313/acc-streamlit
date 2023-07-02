@@ -1,5 +1,5 @@
 import streamlit as st
-from streamlit import components
+import streamlit.components.v1 as components
 import asyncio
 import websockets
 import json
