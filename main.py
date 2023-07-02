@@ -48,7 +48,8 @@ components.html(
 )
 
 # Start the Streamlit app
-def main():
+@st.asyncio
+async def main():
     # Start the WebSocket server in the background
     asyncio.ensure_future(start_server)
 
@@ -72,11 +73,6 @@ def main():
         # Sleep for a short interval
         await asyncio.sleep(0.1)
 
-if __name__ == '__main__':
-    asyncio.run(main())
-
-
 # Run the Streamlit app
 if __name__ == '__main__':
     main()
-
