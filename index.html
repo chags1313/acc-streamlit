@@ -48,45 +48,37 @@
     </div>
 
     <script>
-        // Check if the browser supports the Accelerometer API
-        if ('Accelerometer' in window) {
-            const accelerometer = new Accelerometer({ frequency: 60 });
+        const xData = [];
+        const yData = [];
+        const zData = [];
 
-            const timeData = [];
-            const xData = [];
-            const yData = [];
-            const zData = [];
-
-            accelerometer.addEventListener('reading', () => {
-                // Get the acceleration values
-                const x = accelerometer.x;
-                const y = accelerometer.y;
-                const z = accelerometer.z;
-
-                // Store the acceleration data
-                timeData.push(new Date());
-                xData.push(x);
-                yData.push(y);
-                zData.push(z);
-
-                // Update the plot
-                Plotly.newPlot('acceleration-plot', [
-                    { x: timeData, y: xData, name: 'X' },
-                    { x: timeData, y: yData, name: 'Y' },
-                    { x: timeData, y: zData, name: 'Z' }
-                ], {
-                    xaxis: { title: 'Time' },
-                    yaxis: { title: 'Acceleration' },
-                    showlegend: true
-                });
-            });
-
-            accelerometer.start();
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', handleOrientation);
         } else {
-            // Browser does not support the Accelerometer API
             const accelerationPlotElement = document.getElementById('acceleration-plot');
-            accelerationPlotElement.textContent = 'Your browser does not support the Accelerometer API.';
+            accelerationPlotElement.textContent = 'DeviceOrientationEvent is not supported on this device.';
+        }
+
+        function handleOrientation(event) {
+            const x = event.accelerationIncludingGravity.x;
+            const y = event.accelerationIncludingGravity.y;
+            const z = event.accelerationIncludingGravity.z;
+
+            xData.push(x);
+            yData.push(y);
+            zData.push(z);
+
+            Plotly.newPlot('acceleration-plot', [
+                { x: xData, y: yData, name: 'X' },
+                { x: xData, y: zData, name: 'Y' },
+                { x: yData, y: zData, name: 'Z' }
+            ], {
+                xaxis: { title: 'Acceleration' },
+                yaxis: { title: 'Time' },
+                showlegend: true
+            });
         }
     </script>
 </body>
 </html>
+
