@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Acceleration Reader</title>
+</head>
+<body>
+    <h1>Acceleration Reader</h1>
+
+    <p id="acceleration-data">Acceleration data will be displayed here.</p>
+
+    <script>
+        // Check if the browser supports the Accelerometer API
+        if ('Accelerometer' in window) {
+            const accelerometer = new Accelerometer({ frequency: 60 });
+
+            accelerometer.addEventListener('reading', () => {
+                // Get the acceleration values
+                const x = accelerometer.x;
+                const y = accelerometer.y;
+                const z = accelerometer.z;
+
+                // Display the acceleration data
+                const accelerationDataElement = document.getElementById('acceleration-data');
+                accelerationDataElement.textContent = `Acceleration (m/s²): X: ${x.toFixed(2)}, Y: ${y.toFixed(2)}, Z: ${z.toFixed(2)}`;
+            });
+
+            accelerometer.start();
+        } else {
+            // Browser does not support the Accelerometer API
+            const accelerationDataElement = document.getElementById('acceleration-data');
+            accelerationDataElement.textContent = 'Your browser does not support the Accelerometer API.';
+        }
+    </script>
+</body>
+</html>
