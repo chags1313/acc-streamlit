@@ -14,15 +14,17 @@ async def handle_client(websocket, path):
             # Receive accelerometer data from the client
             data = await websocket.recv()
             accelerometer_data = json.loads(data)
-            
+
             # Append accelerometer data to the list
             accelerometer_data_list.append(accelerometer_data)
-            
+
         except websockets.exceptions.ConnectionClosed:
             break
 
 # Start the WebSocket server
-start_server = websockets.serve(handle_client, "0.0.0.0", 8050)
+async def start_server():
+    server = await websockets.serve(handle_client, "0.0.0.0", 8050)
+    await server.wait_closed()
 
 # Embed the HTML file with the JavaScript code into Streamlit
 components.html(
@@ -50,7 +52,7 @@ components.html(
 # Start the Streamlit app
 def main():
     # Start the WebSocket server in the background
-    asyncio.ensure_future(start_server)
+    asyncio.run(start_server())
 
     # Set Streamlit app title
     st.title('Accelerometer Data')
