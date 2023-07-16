@@ -1,117 +1,96 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>Mediapipe Holistic Pose Detection</title>
-  <style>
-    body {
-      background-color: #1a1c1e;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-
-    .floating-button {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      background-color: #03a9f4;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.26);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    .floating-button:hover {
-      background-color: #0288d1;
-    }
-
-    .floating-button-icon {
-      color: #fff;
-      font-size: 24px;
-    }
-  </style>
-</head>
-
-<body>
-  <video class="input_video4" playsinline></video>
-  <canvas class="output4" width="480px" height="480px"></canvas>
-  
-  <div class="floating-button" id="startButton">
-    <i class="floating-button-icon material-icons">play_arrow</i>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.1/camera_utils.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils@0.1/control_utils.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.2/drawing_utils.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.1/holistic.js" crossorigin="anonymous"></script>
-  <script>
-    class FPS {
-      constructor() {
-        this.startTime = 0;
-        this.prevTime = 0;
-        this.frameCount = 0;
-        this.fps = 0;
-      }
-
-      tick() {
-        const currentTime = Date.now();
-        this.frameCount++;
-        if (currentTime > this.startTime + 1000) {
-          this.fps = Math.round((this.frameCount * 1000) / (currentTime - this.startTime));
-          this.startTime = currentTime;
-          this.frameCount = 0;
+    <style>
+        body {
+            background-color: #1a1c1e;
         }
-      }
-    }
 
-    const video4 = document.getElementsByClassName('input_video4')[0];
-    const out4 = document.getElementsByClassName('output4')[0];
-    const startButton = document.getElementById('startButton');
-    const canvasCtx4 = out4.getContext('2d');
+        .fab {
+            width: 56px;
+            height: 56px;
+            background-color: #d23f31;
+            border-radius: 50%;
+            box-shadow: 0px 2px 10px -3px #333;
+            transition: all 0.3s ease-in-out;
+            font-size: 24px;
+            color: white;
+            text-align: center;
+            line-height: 56px;
+            position: fixed;
+            right: 50px;
+            bottom: 50px;
+            cursor: pointer;
+        }
 
-    const fpsControl = new FPS();
+        .fab:hover {
+            box-shadow: 0px 2px 10px 0px #333;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js"></script>
+</head>
+<body>
+    <video id="video" width="640" height="480" style="display: none;"></video>
+    <canvas id="canvas" width="640" height="480"></canvas>
+    <div id="startStopButton" class="fab">⏯️</div>
 
-    function onResultsHolistic(results) {
-      // Process results and draw on canvas
-      // ...
+    <script>
+        const videoElement = document.getElementById('video');
+        const canvasElement = document.getElementById('canvas');
+        const canvasCtx = canvasElement.getContext('2d');
 
-      fpsControl.tick();
-      canvasCtx4.clearRect(0, 0, out4.width, out4.height);
-      // Draw results on the canvas
-      // ...
-    }
+        const holistic = new Holistic({locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
+        }});
 
-    const holistic = new Holistic();
-    holistic.onResults(onResultsHolistic);
-
-    const camera = new Camera(video4, {
-      onFrame: async () => {
-        await holistic.send({ image: video4 });
-      },
-      width: 480,
-      height: 480
-    });
-
-    startButton.addEventListener('click', () => {
-      if (!camera.active) {
-        // Start pose detection
+        const camera = new Camera(videoElement, {
+            onFrame: async () => {
+              await holistic.send({image: videoElement});
+            },
+            width: 640,
+            height: 480
+        });
         camera.start();
-        startButton.innerHTML = '<i class="floating-button-icon material-icons">stop</i>';
-      } else {
-        // Stop pose detection
-        camera.stop();
-        startButton.innerHTML = '<i class="floating-button-icon material-icons">play_arrow</i>';
-        canvasCtx4.clearRect(0, 0, out4.width, out4.height);
-      }
-    });
-  </script>
+
+        holistic.setOptions({
+            modelComplexity: 1,
+            smoothLandmarks: true,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        holistic.onResults(onResults);
+
+        function onResults(results) {
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            canvasCtx.drawImage(
+                results.image, 0, 0, canvasElement.width, canvasElement.height);
+            if (results.poseLandmarks) {
+                for (const landmark of results.poseLandmarks) {
+                    // Draw pose landmarks.
+                    // You may need to adjust this part based on your needs.
+                }
+            }
+            canvasCtx.restore();
+        }
+
+        let shouldDetect = true;
+        function startStopDetection() {
+            if (shouldDetect) {
+                shouldDetect = false;
+                camera.stop();
+            } else {
+                shouldDetect = true;
+                camera.start();
+            }
+        }
+
+        let startStopButton = document.getElementById('startStopButton');
+        startStopButton.addEventListener('click', startStopDetection);
+    </script>
 </body>
 </html>
