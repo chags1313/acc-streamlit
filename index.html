@@ -1,96 +1,31 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        body {
-            background-color: #1a1c1e;
-        }
+let prevPoseLandmarks = null;
+let calorieCounter = 0;
 
-        .fab {
-            width: 56px;
-            height: 56px;
-            background-color: #d23f31;
-            border-radius: 50%;
-            box-shadow: 0px 2px 10px -3px #333;
-            transition: all 0.3s ease-in-out;
-            font-size: 24px;
-            color: white;
-            text-align: center;
-            line-height: 56px;
-            position: fixed;
-            right: 50px;
-            bottom: 50px;
-            cursor: pointer;
-        }
-
-        .fab:hover {
-            box-shadow: 0px 2px 10px 0px #333;
-        }
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js"></script>
-</head>
-<body>
-    <video id="video" width="640" height="480" style="display: none;"></video>
-    <canvas id="canvas" width="640" height="480"></canvas>
-    <div id="startStopButton" class="fab">⏯️</div>
-
-    <script>
-        const videoElement = document.getElementById('video');
-        const canvasElement = document.getElementById('canvas');
-        const canvasCtx = canvasElement.getContext('2d');
-
-        const holistic = new Holistic({locateFile: (file) => {
-            return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
-        }});
-
-        const camera = new Camera(videoElement, {
-            onFrame: async () => {
-              await holistic.send({image: videoElement});
-            },
-            width: 640,
-            height: 480
+function onResults(results) {
+    canvasCtx.save();
+    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    if (results.poseLandmarks) {
+        drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {color: 'white'});
+        drawLandmarks(canvasCtx, results.poseLandmarks, {
+            color: 'white', 
+            fillColor: 'rgb(255,255,255)', 
+            lineWidth: 2,
+            radius: (landmark) => landmark.visibility < 0.1 ? 0 : 1,
         });
-        camera.start();
-
-        holistic.setOptions({
-            modelComplexity: 1,
-            smoothLandmarks: true,
-            minDetectionConfidence: 0.5,
-            minTrackingConfidence: 0.5
-        });
-
-        holistic.onResults(onResults);
-
-        function onResults(results) {
-            canvasCtx.save();
-            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-            canvasCtx.drawImage(
-                results.image, 0, 0, canvasElement.width, canvasElement.height);
-            if (results.poseLandmarks) {
-                for (const landmark of results.poseLandmarks) {
-                    // Draw pose landmarks.
-                    // You may need to adjust this part based on your needs.
-                }
+        if (prevPoseLandmarks) {
+            let activity = 0;
+            const joints = [15, 17, 16, 18]; // indices for left and right wrists and elbows
+            for (let joint of joints) {
+                let dx = results.poseLandmarks[joint].x - prevPoseLandmarks[joint].x;
+                let dy = results.poseLandmarks[joint].y - prevPoseLandmarks[joint].y;
+                let dz = results.poseLandmarks[joint].z - prevPoseLandmarks[joint].z;
+                activity += Math.sqrt(dx*dx + dy*dy + dz*dz);
             }
-            canvasCtx.restore();
+            calorieCounter += activity;
         }
-
-        let shouldDetect = true;
-        function startStopDetection() {
-            if (shouldDetect) {
-                shouldDetect = false;
-                camera.stop();
-            } else {
-                shouldDetect = true;
-                camera.start();
-            }
-        }
-
-        let startStopButton = document.getElementById('startStopButton');
-        startStopButton.addEventListener('click', startStopDetection);
-    </script>
-</body>
-</html>
+        prevPoseLandmarks = results.poseLandmarks;
+        calorieElement.textContent = Math.floor(calorieCounter * 10); // converting activity score to "calories"
+        timeElement.textContent = ((Date.now() - startTime) / 60000).toFixed(2);
+    }
+    canvasCtx.restore();
+}
