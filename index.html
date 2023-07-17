@@ -1,3 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            background-color: #1a1c1e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .fab {
+            width: 56px;
+            height: 56px;
+            background-color: #d23f31;
+            border-radius: 50%;
+            box-shadow: 0px 2px 10px -3px #333;
+            transition: all 0.3s ease-in-out;
+            font-size: 24px;
+            color: white;
+            position: fixed;
+            right: 50px;
+            bottom: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fab:hover {
+            box-shadow: 0px 2px 10px 0px #333;
+        }
+
+        #canvas {
+            background-color: #1a1c1e;
+        }
+
+        #info {
+            position: fixed;
+            left: 50px;
+            bottom: 50px;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js"></script>
+</head>
+<body>
+    <video id="video" width="640" height="480" style="display: none;"></video>
+    <canvas id="canvas" width="640" height="480"></canvas>
+    <div id="startStopButton" class="fab"><i class="material-icons">videocam</i></div>
+    <div id="info">
+        <div><i class="material-icons">whatshot</i> <span id="calories">0</span> Calories</div>
+        <div><i class="material-icons">timer</i> <span id="time">0</span> Seconds</div>
+    </div>
+
+    <script>
+        const videoElement = document.getElementById('video');
+        const canvasElement = document.getElementById('canvas');
+        const canvasCtx = canvasElement.getContext('2d');
+        const calorieElement = document.getElementById('calories');
+        const timeElement = document.getElementById('time');
+
+        const holistic = new Holistic({locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
+        }});
+
+        let camera;
+        let startTime;
+
+        holistic.setOptions({
+            modelComplexity: 1,
+            smoothLandmarks: true,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        holistic.onResults(onResults);
+
 let prevPoseLandmarks = null;
 let calorieCounter = 0;
 
@@ -24,8 +109,40 @@ function onResults(results) {
             calorieCounter += activity;
         }
         prevPoseLandmarks = results.poseLandmarks;
-        calorieElement.textContent = Math.floor(calorieCounter * 10); // converting activity score to "calories"
+        calorieElement.textContent = Math.floor(calorieCounter * 0.01); // converting activity score to "calories"
         timeElement.textContent = ((Date.now() - startTime) / 60000).toFixed(2);
     }
     canvasCtx.restore();
 }
+
+        let shouldDetect = false;
+        const startStopButton = document.getElementById('startStopButton');
+        const startIcon = 'videocam';
+        const stopIcon = 'stop';
+        function startStopDetection() {
+            if (shouldDetect) {
+                shouldDetect = false;
+                camera.stop();
+                startStopButton.innerHTML = `<i class="material-icons">${startIcon}</i>`;
+            } else {
+                shouldDetect = true;
+                startTime = Date.now();
+                camera = new Camera(videoElement, {
+                    onFrame: async () => {
+                      await holistic.send({image: videoElement});
+                    },
+                    width: 640,
+                    height: 480
+                });
+                camera.start();
+                startStopButton.innerHTML = `<i class="material-icons">${stopIcon}</i>`;
+            }
+        }
+
+        startStopButton.addEventListener('click', startStopDetection);
+    </script>
+</body>
+</html>
+
+
+
